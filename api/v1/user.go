@@ -16,8 +16,12 @@ func UserRegister(c *gin.Context) {
 	}
 }
 
-// UserLoginHandler 用户登陆接口
-func UserLoginHandler() gin.HandlerFunc {
-	return func(ctx *gin.Context) {
+func UserLogin(c *gin.Context) {
+	var userLogin service.UserService
+	if err := c.ShouldBind(&userLogin); err == nil {
+		res := userLogin.Login(c.Request.Context())
+		c.JSON(http.StatusOK, res)
+	} else {
+		c.JSON(http.StatusBadRequest, err)
 	}
 }

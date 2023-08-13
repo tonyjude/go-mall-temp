@@ -16,7 +16,7 @@ type UserService struct {
 	Key      string `json:"key" form:"key"`
 }
 
-func (service UserService) Register(ctx context.Context) serializer.Response {
+func (service *UserService) Register(ctx context.Context) serializer.Response {
 	var user model.User
 	code := e.SUCCESS
 
@@ -84,5 +84,47 @@ func (service UserService) Register(ctx context.Context) serializer.Response {
 	return serializer.Response{
 		Status: code,
 		Msg:    e.GetMsg(code),
+	}
+}
+
+// UserLogin 用户登陆函数
+func (service *UserService) Login(ctx context.Context) serializer.Response {
+	var user *model.User
+	userDao := dao.NewUserDao(ctx)
+	user, exist, err := userDao.ExistOrNotByUserName(service.UserName)
+	if !exist { // 如果查询不到，返回相应的错误
+		//log.LogrusObj.Error(err)
+		code := e.ErrorUserNotFound
+		return serializer.Response{
+			Status: code,
+			Msg:    e.GetMsg(code),
+			Data:   "用户不存在，请先注册！",
+		}
+	}
+
+	if !user.CheckPassword(service.Password) {
+		code := e.ErrorNotCompare
+		return serializer.Response{
+			Status: code,
+			Msg:    e.GetMsg(code),
+			Data:   "密码错误，请重新登录！",
+		}
+	}
+
+	token, err := util.GenerateToken(user.ID, service.UserName, 0)
+	if err != nil {
+		//log.LogrusObj.Error(err)
+		code := e.ErrorAuthToken
+		return serializer.Response{
+			Status: code,
+			Msg:    e.GetMsg(code),
+			Data:   "密码错误，请重新登录！",
+		}
+	}
+
+	return serializer.Response{
+		Status: e.SUCCESS,
+		Data:   serializer.TokenData{User: serializer.BuildUser(user), Token: token},
+		Msg:    e.GetMsg(e.SUCCESS),
 	}
 }
