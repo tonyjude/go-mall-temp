@@ -25,3 +25,7 @@ func UserLogin(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, err)
 	}
 }
+
+func UserUpdate(c *gin.Context) {
+
+}
